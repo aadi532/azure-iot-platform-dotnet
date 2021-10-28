@@ -92,6 +92,10 @@ export class ColumnMapper extends LinkedComponent {
                     label: "connected",
                     value: "connected",
                 },
+                {
+                    label: "errorLogCount",
+                    value: "errorLogCount",
+                },
             ],
             rendererOptions: [
                 { label: "SimulatedRenderer", value: "IsSimulatedRenderer" },

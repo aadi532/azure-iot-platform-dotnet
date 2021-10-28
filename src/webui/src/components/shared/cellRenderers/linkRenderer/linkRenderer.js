@@ -9,7 +9,14 @@ import { svgs } from "utilities";
 const classnames = require("classnames/bind");
 const css = classnames.bind(require("../cellRenderer.module.scss"));
 
-export const LinkRenderer = ({ to, svgPath, ariaLabel, onLinkClick }) => {
+export const LinkRenderer = ({
+    to,
+    svgPath,
+    ariaLabel,
+    onLinkClick,
+    showOnlyLink,
+    value,
+}) => {
     return (
         <div className={css("pcs-renderer-cell")}>
             <NavLink
@@ -17,7 +24,11 @@ export const LinkRenderer = ({ to, svgPath, ariaLabel, onLinkClick }) => {
                 aria-label={ariaLabel}
                 className={css("pcs-renderer-link")}
             >
-                <Svg src={svgPath || svgs.ellipsis} onClick={onLinkClick} />
+                {showOnlyLink ? (
+                    <div className={css("link")}>{value}</div>
+                ) : (
+                    <Svg src={svgPath || svgs.ellipsis} onClick={onLinkClick} />
+                )}
             </NavLink>
         </div>
     );

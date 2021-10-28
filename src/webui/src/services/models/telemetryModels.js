@@ -195,3 +195,25 @@ export const toDeviceUploadsModel = (response = []) => {
     );
     return data;
 };
+
+export const toErrorLogsForDevicesModel = (response = {}) =>
+    getItems(response).map(toErrorLogsForDeviceModel);
+
+export const toErrorLogsForDeviceModel = (errorLogsByDevice = {}) => {
+    const model = camelCaseReshape(errorLogsByDevice, {
+        deviceId: "DeviceId",
+        count: "Count",
+    });
+    return update(model, {
+        ErrorLogs: {
+            $set: errorLogsByDevice.ErrorLogs.map((x) =>
+                camelCaseReshape(x, {
+                    id: "Id",
+                    name: "Name",
+                    blobName: "BlobName",
+                    dateCreated: "DateCreated",
+                })
+            ),
+        },
+    });
+};

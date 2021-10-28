@@ -12,3 +12,4 @@ export * from "./ruleStatusRenderer/ruleStatusRenderer";
 export * from "./severityRenderer/severityRenderer";
 export * from "./softSelectLinkRenderer/softSelectLinkRenderer";
 export * from "./timeRenderer/timeRenderer";
+export * from "./downloadButtonRenderer/downloadButtonRenderer";

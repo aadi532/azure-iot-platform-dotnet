@@ -165,6 +165,7 @@ export function classifyError(error) {
 const jsonHeaders = {
         Accept: "application/json",
         "Content-Type": "application/json",
+        "x-source": "external",
     },
     /** Headers for an authenticated request */
     authenticationHeaders = (token) => ({

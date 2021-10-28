@@ -41,6 +41,7 @@ namespace Mmm.Iot.DeviceTelemetry.WebService
             services.AddApplicationInsightsTelemetry(applicationInsightsOptions);
             services.AddApplicationInsightsTelemetryProcessor<HealthProbeTelemetryProcessor>();
             services.AddMvc().AddControllersAsServices().AddNewtonsoftJson();
+            services.AddCors();
             services.AddHttpContextAccessor();
             this.ApplicationContainer = new DependencyResolution().Setup(services, this.Configuration);
             return new AutofacServiceProvider(this.ApplicationContainer);
@@ -59,6 +60,7 @@ namespace Mmm.Iot.DeviceTelemetry.WebService
                 c.SwaggerEndpoint("./swagger/v1/swagger.json", "V1");
                 c.RoutePrefix = string.Empty;
             });
+            app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
             SetupTelemetry(app, config);
             app.UseMiddleware<AuthMiddleware>();
             app.UseEndpoints(endpoints =>

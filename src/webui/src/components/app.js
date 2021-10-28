@@ -230,6 +230,17 @@ class App extends Component {
                         { to: "/maintenance/rule/:id", matchParam: "id" },
                     ],
                 },
+                {
+                    path: "/maintenance/deviceLogs/:id",
+                    crumbs: [
+                        { to: "/maintenance", labelId: "tabs.maintenance" },
+                        {
+                            to: "/maintenance/deviceLogs",
+                            labelId: "maintenance.deviceLogs",
+                        },
+                        { to: "/maintenance/deviceLogs/:id", matchParam: "id" },
+                    ],
+                },
             ],
             shellProps = {
                 pagesConfig,

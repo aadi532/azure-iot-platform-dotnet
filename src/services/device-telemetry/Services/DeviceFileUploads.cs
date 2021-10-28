@@ -10,10 +10,17 @@ using System.Text;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Documents;
+using Microsoft.Azure.Documents.Client;
 using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
+using Mmm.Iot.Common.Services;
 using Mmm.Iot.Common.Services.Config;
+using Mmm.Iot.Common.Services.Exceptions;
+using Mmm.Iot.Common.Services.External.CosmosDb;
+using Mmm.Iot.Common.Services.Helpers;
 using Mmm.Iot.DeviceTelemetry.Services.Models;
 
 namespace Mmm.Iot.DeviceTelemetry.Services
@@ -22,12 +29,23 @@ namespace Mmm.Iot.DeviceTelemetry.Services
     {
         private const string FileUploadStore = "iot-file-upload";
         private const string DateFormat = "yyyy-MM-dd'T'HH:mm:sszzz";
+        private const string ErrorLogSchemaKey = "errorLog";
+        private const string CreatedKey = "created";
+        private const string DeviceIdKey = "deviceId";
         private readonly AppConfig config;
         private readonly ILogger logger;
+        private readonly IStorageClient storageClient;
+        private readonly IHttpContextAccessor httpContextAccessor;
 
-        public DeviceFileUploads(AppConfig config, ILogger<DeviceFileUploads> logger)
+        public DeviceFileUploads(
+            AppConfig config,
+            IStorageClient storageClient,
+            IHttpContextAccessor contextAccessor,
+            ILogger<DeviceFileUploads> logger)
         {
             this.config = config;
+            this.storageClient = storageClient;
+            this.httpContextAccessor = contextAccessor;
             this.logger = logger;
         }
 
@@ -148,6 +166,61 @@ namespace Mmm.Iot.DeviceTelemetry.Services
             }
 
             return null;
+        }
+
+        public async Task<List<ErrorLog>> ListErrorlogAsync(
+            DateTimeOffset? from,
+            DateTimeOffset? to,
+            string order,
+            int skip,
+            int limit,
+            string[] devices)
+        {
+            var sql = QueryBuilder.GetDocumentsSql(
+                ErrorLogSchemaKey,
+                null,
+                null,
+                from,
+                CreatedKey,
+                to,
+                CreatedKey,
+                order,
+                CreatedKey,
+                skip,
+                limit,
+                devices,
+                DeviceIdKey);
+
+            this.logger.LogDebug("Created alarm by rule query {sql}", sql);
+
+            FeedOptions queryOptions = new FeedOptions
+            {
+                EnableCrossPartitionQuery = true,
+                EnableScanInQuery = true,
+            };
+
+            try
+            {
+                string tenantId = this.httpContextAccessor.HttpContext.Request.GetTenant();
+
+                List<Document> docs = await this.storageClient.QueryDocumentsAsync(
+                    "iot",
+                    $"errorlog-{tenantId}",
+                    queryOptions,
+                    sql,
+                    skip,
+                    limit);
+
+                return docs == null ?
+                    new List<ErrorLog>() :
+                    docs
+                        .Select(doc => new ErrorLog(doc))
+                        .ToList();
+            }
+            catch (ResourceNotFoundException e)
+            {
+                throw new ResourceNotFoundException($"No alarms exist in CosmosDb. The alarms collection  does not exist.", e);
+            }
         }
     }
 }

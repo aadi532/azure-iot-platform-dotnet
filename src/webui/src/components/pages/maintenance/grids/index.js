@@ -4,3 +4,4 @@ export * from "./alertGrid";
 export * from "./jobGrid";
 export * from "./jobStatusGrid";
 export * from "./alertOccurrencesGrid";
+export * from "./deviceLogsGrid";

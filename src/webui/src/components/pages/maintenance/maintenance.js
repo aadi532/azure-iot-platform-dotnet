@@ -10,6 +10,7 @@ import Config from "app.config";
 import { SummaryContainer } from "./summary/summary.container";
 import { RuleDetailsContainer } from "./ruleDetails/ruleDetails.container";
 import { JobDetailsContainer } from "./jobDetails/jobDetails.container";
+import { ErrorLogDetailsContainer } from "./errorLogDetails/errorLogDetails.container";
 import { getIntervalParams } from "utilities";
 
 import {
@@ -364,6 +365,17 @@ export class Maintenance extends Component {
                             {...jobProps}
                             {...routeProps}
                             deviceEntities={deviceEntities}
+                        />
+                    )}
+                />
+                <Route
+                    exact
+                    path={"/maintenance/deviceLogs/:id"}
+                    render={(routeProps) => (
+                        <ErrorLogDetailsContainer
+                            {...generalProps}
+                            {...jobProps}
+                            {...routeProps}
                         />
                     )}
                 />

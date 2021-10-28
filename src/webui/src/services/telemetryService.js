@@ -15,6 +15,7 @@ import {
     toStatusModel,
     toTelemetryRequestModel,
     toDeviceUploadsModel,
+    toErrorLogsForDevicesModel,
 } from "./models";
 import { map, catchError } from "rxjs/operators";
 
@@ -158,6 +159,24 @@ export class TelemetryService {
             { responseType: "blob" }
         );
         return response;
+    }
+
+    static getErrorLogsByDevice(devices = [], timeInterval) {
+        let body = toTelemetryRequestModel({
+            from: "NOW-" + timeInterval,
+            to: "NOW",
+            order: "desc",
+            devices,
+        });
+        return HttpClient.post(
+            `https://localhost:5001/v1/deviceFiles/ErrorLogUploads`,
+            body
+        ).pipe(
+            catchError((error) =>
+                this.catch404(error, ContinueAsEmptyMessages)
+            ),
+            map(toErrorLogsForDevicesModel)
+        );
     }
 
     /*

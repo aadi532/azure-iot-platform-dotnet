@@ -57,7 +57,7 @@
         "typescript": "3.4.3"
     },
     "scripts": {
-        "start": "./node_modules/.bin/eslint . && react-scripts start",
+        "start": "./node_modules/.bin/eslint . --fix && react-scripts start",
         "build": "GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true react-scripts build",
         "lint": "./node_modules/.bin/eslint .",
         "test": "react-scripts test",
