@@ -538,7 +538,6 @@ export class Devices extends Component {
                 this.state.openFlyoutName === "sim-management",
             error = deviceGroupError || dataError;
 
-        console.log(deviceData);
         return (
             <ComponentArray>
                 <ContextMenuAgile

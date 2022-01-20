@@ -356,7 +356,6 @@ export class DevicesGrid extends Component {
             gridControls: this.props.gridControls,
         };
 
-        console.log(gridProps.columnDefs);
         return [
             <PcsGrid key="device-grid-key" {...gridProps} />,
             this.getOpenFlyout(),

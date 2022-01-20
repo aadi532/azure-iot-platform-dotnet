@@ -606,6 +606,81 @@ namespace Mmm.Iot.Common.Services.Helpers
             return (queryBuilder.ToString(), queryParameterCollection);
         }
 
+        public static (string Query, Dictionary<string, string> QueryParameter) GetKustoQuery(
+            string tableName,
+            string byId,
+            string byIdProperty,
+            DateTimeOffset? from,
+            string fromProperty,
+            DateTimeOffset? to,
+            string toProperty,
+            string order,
+            string orderProperty,
+            int skip,
+            int limit)
+        {
+            ValidateInput(ref tableName);
+            ValidateInput(ref fromProperty);
+            ValidateInput(ref toProperty);
+            ValidateInput(ref order);
+            ValidateInput(ref orderProperty);
+
+            var queryParameterCollection = new Dictionary<string, string>();
+            var queryParameterTypeCollection = new Dictionary<string, string>();
+
+            var queryBuilder = new StringBuilder($"{tableName}");
+
+            if (!string.IsNullOrEmpty(byId) && !string.IsNullOrEmpty(byIdProperty))
+            {
+                ValidateInput(ref byId);
+                ValidateInput(ref byIdProperty);
+
+                queryBuilder.AppendLine($" | where {byIdProperty} == byId");
+
+                queryParameterCollection.Add("byId", byId);
+                queryParameterTypeCollection.Add("byId", "string");
+            }
+
+            if (from.HasValue)
+            {
+                // TODO: left operand is never null
+                DateTimeOffset fromDate = from ?? default(DateTimeOffset);
+                queryBuilder.AppendLine($" | where {fromProperty} >= datetime({fromDate.UtcDateTime.ToString("s", System.Globalization.CultureInfo.InvariantCulture)})");
+            }
+
+            if (to.HasValue)
+            {
+                // TODO: left operand is never null
+                DateTimeOffset toDate = to ?? default(DateTimeOffset);
+                queryBuilder.Append($" and {toProperty} <= datetime({toDate.UtcDateTime.ToString("s", System.Globalization.CultureInfo.InvariantCulture)})");
+            }
+
+            if (order == null || string.Equals(order, "desc", StringComparison.OrdinalIgnoreCase))
+            {
+                queryBuilder.AppendLine($" | top topNumber by {orderProperty} desc");
+            }
+            else
+            {
+                queryBuilder.AppendLine($" | top topNumber by {orderProperty} asc");
+            }
+
+            queryParameterCollection.Add("topNumber", $"{skip + limit}");
+            queryParameterTypeCollection.Add("topNumber", "int");
+
+            if (queryParameterTypeCollection.Count > 0)
+            {
+                var queryParameterBuilder = new StringBuilder("declare query_parameters (");
+
+                queryParameterBuilder.Append($"{string.Join(", ", queryParameterTypeCollection.Select(p => $"{p.Key}:{p.Value}"))}");
+
+                queryParameterBuilder.Append(");");
+
+                queryBuilder = queryParameterBuilder.AppendLine(queryBuilder.ToString());
+            }
+
+            return (queryBuilder.ToString(), queryParameterCollection);
+        }
+
         public static (string Query, Dictionary<string, string> QueryParameter) GetTopDeviceMessagesKustoQuery(
             string tableName,
             int limit,
@@ -694,6 +769,91 @@ namespace Mmm.Iot.Common.Services.Helpers
                     queryParameterTypeCollection.Add(p.Key, "string");
                 }
             }
+
+            if (queryParameterTypeCollection.Count > 0)
+            {
+                var queryParameterBuilder = new StringBuilder("declare query_parameters (");
+
+                queryParameterBuilder.Append($"{string.Join(", ", queryParameterTypeCollection.Select(p => $"{p.Key}:{p.Value}"))}");
+
+                queryParameterBuilder.Append(");");
+
+                queryBuilder = queryParameterBuilder.AppendLine(queryBuilder.ToString());
+            }
+
+            return (queryBuilder.ToString(), queryParameterCollection);
+        }
+
+        public static (string Query, Dictionary<string, string> QueryParameter) GetDeviceLogCountKustoQuery(
+            string tableName,
+            DateTimeOffset? from,
+            string fromProperty,
+            DateTimeOffset? to,
+            string toProperty,
+            string order,
+            string orderProperty,
+            int skip,
+            int limit,
+            string[] devices,
+            string devicesProperty)
+        {
+            ValidateInput(ref tableName);
+            ValidateInput(ref fromProperty);
+            ValidateInput(ref toProperty);
+            ValidateInput(ref order);
+            ValidateInput(ref orderProperty);
+
+            for (int i = 0; i < devices.Length; i++)
+            {
+                ValidateInput(ref devices[i]);
+            }
+
+            ValidateInput(ref devicesProperty);
+
+            var queryParameterCollection = new Dictionary<string, string>();
+            var queryParameterTypeCollection = new Dictionary<string, string>();
+
+            var queryBuilder = new StringBuilder($"{tableName}");
+
+            if (devices.Length > 0)
+            {
+                var devicesParameters = devices.Select((value, index) => new KeyValuePair<string, string>($"devicesParameterName{index}", value));
+
+                queryBuilder.AppendLine($" | where {devicesProperty} in ({string.Join(",", devicesParameters.Select(p => p.Key))})");
+                foreach (var p in devicesParameters)
+                {
+                    queryParameterCollection.Add(p.Key, p.Value);
+                    queryParameterTypeCollection.Add(p.Key, "string");
+                }
+            }
+
+            if (from.HasValue)
+            {
+                // TODO: left operand is never null
+                DateTimeOffset fromDate = from ?? default(DateTimeOffset);
+                queryBuilder.AppendLine($" | where {fromProperty} >= datetime({fromDate.UtcDateTime.ToString("s", System.Globalization.CultureInfo.InvariantCulture)})");
+            }
+
+            if (to.HasValue)
+            {
+                // TODO: left operand is never null
+                DateTimeOffset toDate = to ?? default(DateTimeOffset);
+                queryBuilder.Append($" and {toProperty} <= datetime({toDate.UtcDateTime.ToString("s", System.Globalization.CultureInfo.InvariantCulture)})");
+            }
+
+            queryBuilder.AppendLine($" | summarize Count = count(), TimeStamp = max(TimeStamp) by {devicesProperty}");
+
+            if (order == null || string.Equals(order, "desc", StringComparison.OrdinalIgnoreCase))
+            {
+                queryBuilder.AppendLine($" | top topNumber by {orderProperty} desc");
+            }
+            else
+            {
+                queryBuilder.AppendLine($" | top topNumber by {orderProperty} asc");
+            }
+
+            queryParameterCollection.Add("topNumber", $"{skip + limit}");
+            queryParameterTypeCollection.Add("topNumber", "int");
 
             if (queryParameterTypeCollection.Count > 0)
             {

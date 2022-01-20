@@ -138,7 +138,7 @@ stages:
               ScriptType: FilePath
               workingDirectory: $(System.DefaultWorkingDirectory)
               ScriptPath: pipelines/cd/ExistingTenantsADE/ExistingTenantsADE.ps1
-              ScriptArguments: -applicationCode $(applicationCode) -environmentCategory $(environmentCategory) -resourceGroupName $(resourceGroupName) -servicePrincipalId $(servicePrincipalId) -servicePrincipalKey $(servicePrincipalKey) -tenantId $(tenantId) -subscriptionId $(subscriptionId) -storageAccountName $(storageAccountName) -appConfigurationName $(appConfigurationName) -clusterName $(dataExplorerClusterName)
+              ScriptArguments: -applicationCode $(applicationCode) -environmentCategory $(environmentCategory) -resourceGroupName $(resourceGroupName) -servicePrincipalId $(servicePrincipalId) -servicePrincipalKey $(servicePrincipalKey) -tenantId $(tenantId) -subscriptionId $(subscriptionId) -storageAccountName $(storageAccountName) -appConfigurationName $(appConfigurationName) -clusterName $(dataExplorerClusterName) -blobEventGridSystemTopicName $(blobEventGridName)
               azurePowerShellVersion: LatestVersion
 
           - task: AzurePowerShell@5

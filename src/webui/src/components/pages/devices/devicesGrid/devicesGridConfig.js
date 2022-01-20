@@ -8,7 +8,6 @@ import {
     ConnectionStatusRenderer,
     TimeRenderer,
     SoftSelectLinkRenderer,
-    LinkRenderer,
 } from "components/shared/cellRenderers";
 import {
     EMPTY_FIELD_VAL,
@@ -81,22 +80,6 @@ export const defaultDeviceColumns = [
         sort: "asc",
         cellRendererFramework: SoftSelectLinkRenderer,
         suppressSizeToFit: true,
-    },
-    {
-        headerName: "Has Logs",
-        field: "hasLogs",
-        cellRendererFramework: (props) => {
-            if (props.value === "Yes") {
-                return (
-                    <LinkRenderer
-                        {...props}
-                        to={`/maintenance/deviceLogs/${props.data.id}`}
-                        showOnlyLink={true}
-                    />
-                );
-            }
-            return props.value;
-        },
     },
 ];
 

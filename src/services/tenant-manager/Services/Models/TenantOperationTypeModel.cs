@@ -16,5 +16,6 @@ namespace Mmm.Iot.TenantManager.Services.Models
         GrafanaDashboardDeletion,
         ADXDatabaseDeletion,
         EventHubDeletion,
+        BlobEventSubscriptionDeletion,
     }
 }

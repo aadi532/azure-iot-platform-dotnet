@@ -422,6 +422,19 @@ namespace Mmm.Iot.TenantManager.Services.Tasks
                                 }
 
                                 break;
+                            case TenantOperation.BlobEventSubscriptionDeletion:
+                                try
+                                {
+                                    Console.WriteLine($"Deleting {item.Name}...");
+                                    await this.azureManagementClient.EventGridManagementClient.DeleteSystemTopicEventSubscriptionAsync(this.config.Global.BlobEventGridSystemTopic.Name, item.Name);
+                                    await this.tableStorageClient.DeleteAsync(TableName, item);
+                                }
+                                catch (ResourceNotFoundException)
+                                {
+                                    Console.WriteLine($"Deleting Table Operation Record...");
+                                }
+
+                                break;
                             default:
                                 break;
                         }

@@ -45,6 +45,10 @@
       <Link>Tasks\GrafanaTemplates\sample-dataexplorer-datasource-template.json</Link>
       <LogicalName>sample-dataexplorer-datasource-template.json</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="Tasks\ARMTemplates\blobeventsubscription.json">
+      <Link>Tasks\ARMTemplates\blobeventsubscription.json</Link>
+      <LogicalName>blobeventsubscription.json</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Tasks\GrafanaTemplates\" />

@@ -33,6 +33,14 @@ modify_webui_config() {
   sed -i 's/developmentMode.*/developmentMode: '$value',/g' /app/webui-config.js
   echo "Set Development Mode: "$value
 
+  value=$(_get_configuration "DeviceTelemetryService:Messages:TelemetryStorageType" | sed 's/"//g' )
+  if [ $value == "ade" ]; then
+    sed -i 's/isADXDeployed.*/isADXDeployed: true,/g' ./app/webui-config.js
+  else
+    sed -i 's/isADXDeployed.*/isADXDeployed: false,/g' /app/webui-config.js
+  fi
+  echo "Set ADX Deployed: "$value
+
 }
 
 main() {

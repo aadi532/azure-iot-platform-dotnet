@@ -11,10 +11,12 @@ namespace Mmm.Iot.Common.Services.External.Azure
     {
         Task CreateDBInClusterAsync(string databaseName, TimeSpan? softDeletePeriod, TimeSpan? hotCachePeriod = null);
 
-        Task AddEventHubDataConnectionAsync(string dataConnectName, string databaseName, string tableName, string tableMappingName, string eventHubNamespace, string eventHubName, string eventHubConsumerGroup);
+        Task AddEventHubDataConnectionAsync(string dataConnectionName, string databaseName, string tableName, string tableMappingName, string eventHubNamespace, string eventHubName, string eventHubConsumerGroup);
 
-        Task AddIoTHubDataConnectionAsync(string dataConnectName, string databaseName, string tableName, string tableMappingName, string iotHubName, string iotHubConsumerGroup);
+        Task AddIoTHubDataConnectionAsync(string dataConnectionName, string databaseName, string tableName, string tableMappingName, string iotHubName, string iotHubConsumerGroup);
 
         Task DeleteDatabaseAsync(string databaseName);
+
+        Task AddBlobStorageDataConnectionAsync(string dataConnectionName, string databaseName, string tableName, string tableMappingName, string eventHubNamespace, string eventHubName, string eventHubConsumerGroup, DataFormat dataFormat);
     }
 }

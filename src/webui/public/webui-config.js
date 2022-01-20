@@ -9,4 +9,5 @@ var DeploymentConfig = {
   authEnabled: true,
   issuer: "https://acsagic-aks-dev.centralus.cloudapp.azure.com/auth/",
   developmentMode: false,
+  isADXDeployed: false,
 }

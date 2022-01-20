@@ -1,0 +1,3 @@
+.create table DeviceLog (DeviceId:string, LogType: string, Message:string, CallStack:string,TimeStamp:datetime)
+.create table DeviceLog ingestion csv mapping MAPPINGNAME '[{"column":"DeviceId","Ordinal":0,"datatype":"string"},{"column":"LogType","Ordinal":1,"datatype":"string"},{"column":"Message","Ordinal":2,"datatype":"string"},{"column":"CallStack","Ordinal":3,"datatype":"string"},{"column":"TimeStamp","Ordinal":4,"datatype":"datetime"}]'
+.alter table DeviceLog policy streamingingestion enable

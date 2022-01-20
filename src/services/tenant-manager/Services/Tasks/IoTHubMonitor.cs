@@ -11,15 +11,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Kusto.Data;
 using Kusto.Data.Common;
-using Kusto.Data.Net.Client;
 using Microsoft.Azure.Cosmos.Table;
-using Microsoft.Azure.Management.EventHub.Models;
 using Microsoft.Azure.Management.IotHub.Models;
-using Microsoft.Azure.Management.Kusto;
-using Microsoft.Azure.Management.Kusto.Models;
 using Microsoft.Extensions.Hosting;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
-using Microsoft.Rest;
 using Mmm.Iot.Common.Services.Config;
 using Mmm.Iot.Common.Services.External.AppConfiguration;
 using Mmm.Iot.Common.Services.External.Azure;
@@ -112,9 +106,9 @@ namespace Mmm.Iot.TenantManager.Services.Tasks
                     Console.WriteLine("Getting Items...");
                     TableQuery<TenantModel> query = new TableQuery<TenantModel>();
                     query.Where(TableQuery.CombineFilters(
-                        TableQuery.GenerateFilterConditionForBool("IsIotHubDeployed", QueryComparisons.Equal, false),
-                        TableOperators.And,
-                        TableQuery.GenerateFilterConditionForDate("Timestamp", QueryComparisons.GreaterThan, DateTime.Now.AddHours(-1))));
+                       TableQuery.GenerateFilterConditionForBool("IsIotHubDeployed", QueryComparisons.Equal, false),
+                       TableOperators.And,
+                       TableQuery.GenerateFilterConditionForDate("Timestamp", QueryComparisons.GreaterThan, DateTime.Now.AddHours(-1))));
 
                     var items = await this.tableStorageClient.QueryAsync("tenant", query, stoppingToken);
                     foreach (var item in items)
@@ -150,6 +144,21 @@ namespace Mmm.Iot.TenantManager.Services.Tasks
                                     await this.ADXDeviceTwinSetup(item.TenantId, string.Format(IoTDatabaseNameFormat, item.TenantId), eventHubNameSpace);
                                     await this.ADXDeviceGroupSetup(item.TenantId, string.Format(IoTDatabaseNameFormat, item.TenantId), eventHubNameSpace);
                                     await this.ADXAlertsSetup(item.TenantId, string.Format(IoTDatabaseNameFormat, item.TenantId), eventHubNameSpace);
+
+                                    // Blob Event Grid Event Subscription setup for Device Logging.
+                                    reader = new StreamReader(assembly.GetManifestResourceStream("blobeventsubscription.json"));
+                                    template = await reader.ReadToEndAsync();
+                                    template = string.Format(
+                                        template,
+                                        $"{item.TenantId}-eventsub",
+                                        this.config.Global.BlobEventGridSystemTopic.Name,
+                                        this.config.Global.SubscriptionId,
+                                        this.config.Global.ResourceGroup,
+                                        eventHubNameSpace,
+                                        $"{item.TenantId}-devicelogs",
+                                        item.TenantId);
+                                    await this.azureManagementClient.DeployTemplateAsync(template);
+                                    await this.ADXDeviceLogsSetup(item.TenantId, string.Format(IoTDatabaseNameFormat, item.TenantId), eventHubNameSpace);
 
                                     // Migrate DeviceGroups Data into ADX
                                     await this.MigrateDeviceGroupsToADX(item.TenantId);
@@ -216,6 +225,8 @@ namespace Mmm.Iot.TenantManager.Services.Tasks
             this.azureManagementClient.EventHubsManagementClient.CreateEventHub(eventHubNameSpace, $"{tenantId}-devicegroup");
 
             this.azureManagementClient.EventHubsManagementClient.CreateEventHub(eventHubNameSpace, $"{tenantId}-alerts");
+
+            this.azureManagementClient.EventHubsManagementClient.CreateEventHub(eventHubNameSpace, $"{tenantId}-devicelogs");
 
             // Set the Refresh Key to new connectionstring so the functions can update
             // values from AppConfiguration
@@ -407,6 +418,45 @@ namespace Mmm.Iot.TenantManager.Services.Tasks
             alertsPolicyList.Add(alertsDataUpdatePolicy);
 
             this.kustoTableManagementClient.AlterTablePolicy(alertsTableName, databaseName, alertsPolicyList);
+        }
+
+        private async Task ADXDeviceLogsSetup(string tenantId, string databaseName, string eventHubNameSpace)
+        {
+            Console.WriteLine($"Creating deviceLogs table and mapping in {tenantId} DB in Data Explorer");
+
+            var tableName = "DeviceLogs";
+            var tableMappingName = $"DevicelogEvents_JSON_Mapping-{tenantId}";
+            var tableSchema = new[]
+            {
+                  Tuple.Create("DeviceId", "System.String"),
+                  Tuple.Create("LogType", "System.String"),
+                  Tuple.Create("Message", "System.String"),
+                  Tuple.Create("CallStack", "System.String"),
+                  Tuple.Create("TimeStamp", "System.Datetime"),
+            };
+            var mappingSchema = new ColumnMapping[]
+            {
+                  new ColumnMapping() { ColumnName = "DeviceId", ColumnType = "string", Properties = new Dictionary<string, string>() { { MappingConsts.Ordinal, "0" } } },
+                  new ColumnMapping() { ColumnName = "LogType", ColumnType = "string", Properties = new Dictionary<string, string>() { { MappingConsts.Ordinal, "1" } } },
+                  new ColumnMapping() { ColumnName = "Message", ColumnType = "string", Properties = new Dictionary<string, string>() { { MappingConsts.Ordinal, "2" } } },
+                  new ColumnMapping() { ColumnName = "CallStack", ColumnType = "string", Properties = new Dictionary<string, string>() { { MappingConsts.Ordinal, "3" } } },
+                  new ColumnMapping() { ColumnName = "TimeStamp", ColumnType = "datetime", Properties = new Dictionary<string, string>() { { MappingConsts.Ordinal, "4" } } },
+            };
+
+            string dataConnectionName = $"DeviceLogsDataConnect-{tenantId.Substring(0, 8)}";
+            string eventHubName = $"{tenantId}-devicelogs";
+
+            this.kustoTableManagementClient.CreateTable(tableName, tableSchema, databaseName);
+
+            this.kustoTableManagementClient.CreateTableMapping(tableMappingName, mappingSchema, tableName, databaseName, Kusto.Data.Ingestion.IngestionMappingKind.Csv);
+
+            this.kustoTableManagementClient.EnableStreamingIngestionPolicyToTable(tableName, databaseName);
+
+            string consumerGroup = "$Default";
+
+            await this.azureManagementClient.KustoClusterManagementClient.AddBlobStorageDataConnectionAsync(dataConnectionName, databaseName, tableName, tableMappingName, eventHubNameSpace, eventHubName, consumerGroup, DataFormat.CSV);
+
+            this.kustoTableManagementClient.AlterTableRetentionPolicy(tableName, databaseName, new TimeSpan(365, 0, 0, 0), DataRecoverability.Disabled);
         }
 
         private void ADXTableSetup(

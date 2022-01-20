@@ -70,13 +70,13 @@ namespace Mmm.Iot.Common.Services.External.Azure
             }
         }
 
-        public async Task AddEventHubDataConnectionAsync(string dataConnectName, string databaseName, string tableName, string tableMappingName, string eventHubNamespace, string eventHubName, string eventHubConsumerGroup)
+        public async Task AddEventHubDataConnectionAsync(string dataConnectionName, string databaseName, string tableName, string tableMappingName, string eventHubNamespace, string eventHubName, string eventHubConsumerGroup)
         {
             try
             {
                 await this.CreateOrUpdateDataConnection(
                         databaseName,
-                        dataConnectName,
+                        dataConnectionName,
                         new EventHubDataConnection(
                             $"/subscriptions/{this.config.Global.SubscriptionId}/resourceGroups/{this.config.Global.ResourceGroup}/providers/Microsoft.EventHub/namespaces/{eventHubNamespace}/eventhubs/{eventHubName}",
                             eventHubConsumerGroup,
@@ -90,20 +90,20 @@ namespace Mmm.Iot.Common.Services.External.Azure
             {
                 if (e.Body.Code == "ResourceNotFound")
                 {
-                    throw new ResourceNotFoundException($"Error Creating EventHub Data Connection from kusto database {databaseName}, IotHub {eventHubName}");
+                    throw new ResourceNotFoundException($"Error Creating EventHub Data Connection for kusto database {databaseName}, EventHub {eventHubName}");
                 }
 
                 throw e;
             }
         }
 
-        public async Task AddIoTHubDataConnectionAsync(string dataConnectName, string databaseName, string tableName, string tableMappingName, string iotHubName, string iotHubConsumerGroup)
+        public async Task AddIoTHubDataConnectionAsync(string dataConnectionName, string databaseName, string tableName, string tableMappingName, string iotHubName, string iotHubConsumerGroup)
         {
             try
             {
                 await this.CreateOrUpdateDataConnection(
                         databaseName,
-                        dataConnectName,
+                        dataConnectionName,
                         new IotHubDataConnection(
                             $"/subscriptions/{this.config.Global.SubscriptionId}/resourceGroups/{this.config.Global.ResourceGroup}/providers/Microsoft.Devices/IotHubs/{iotHubName}",
                             iotHubConsumerGroup,
@@ -122,7 +122,35 @@ namespace Mmm.Iot.Common.Services.External.Azure
             {
                 if (e.Body.Code == "ResourceNotFound")
                 {
-                    throw new ResourceNotFoundException($"Error Creating IoTHub Data Connection from kusto database {databaseName}, IotHub {iotHubName}");
+                    throw new ResourceNotFoundException($"Error Creating IoTHub Data Connection for kusto database {databaseName}, IotHub {iotHubName}");
+                }
+
+                throw e;
+            }
+        }
+
+        public async Task AddBlobStorageDataConnectionAsync(string dataConnectionName, string databaseName, string tableName, string tableMappingName, string eventHubNamespace, string eventHubName, string eventHubConsumerGroup, DataFormat dataFormat)
+        {
+            try
+            {
+                await this.CreateOrUpdateDataConnection(
+                        databaseName,
+                        dataConnectionName,
+                        new EventGridDataConnection(
+                            $"/subscriptions/{this.config.Global.SubscriptionId}/resourceGroups/{this.config.Global.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{this.config.Global.StorageAccount.Name}",
+                            $"/subscriptions/{this.config.Global.SubscriptionId}/resourceGroups/{this.config.Global.ResourceGroup}/providers/Microsoft.EventHub/namespaces/{eventHubNamespace}/eventhubs/{eventHubName}",
+                            eventHubConsumerGroup,
+                            location: this.config.Global.Location,
+                            tableName: tableName,
+                            mappingRuleName: tableMappingName,
+                            dataFormat: dataFormat.ToString(),
+                            blobStorageEventType: "Microsoft.Storage.BlobCreated"));
+            }
+            catch (CloudException e)
+            {
+                if (e.Body.Code == "ResourceNotFound")
+                {
+                    throw new ResourceNotFoundException($"Error Creating Blob Data Connection for kusto database {databaseName}, EventHub {eventHubName}");
                 }
 
                 throw e;

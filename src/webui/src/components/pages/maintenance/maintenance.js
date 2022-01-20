@@ -10,7 +10,7 @@ import Config from "app.config";
 import { SummaryContainer } from "./summary/summary.container";
 import { RuleDetailsContainer } from "./ruleDetails/ruleDetails.container";
 import { JobDetailsContainer } from "./jobDetails/jobDetails.container";
-import { ErrorLogDetailsContainer } from "./errorLogDetails/errorLogDetails.container";
+import { DeviceLogDetailsContainer } from "./deviceLogDetails/deviceLogDetails.container";
 import { getIntervalParams } from "utilities";
 
 import {
@@ -44,6 +44,9 @@ export class Maintenance extends Component {
             jobsCount: undefined,
             failedJobsCount: undefined,
             succeededJobsCount: undefined,
+            deviceLogsSummaryIsPending: true,
+            deviceLogsSummary: [],
+            deviceLogsSummaryError: undefined,
 
             lastUpdated: undefined,
         };
@@ -65,10 +68,12 @@ export class Maintenance extends Component {
                 timeInterval || this.props.timeInterval
             ),
             params = { ...timeParams, devices },
-            jobParams = { ...timeParams };
+            jobParams = { ...timeParams },
+            deviceLogParams = { ...timeParams };
         this.setState({
             alertsIsPending: true,
             jobsIsPending: true,
+            deviceLogsSummaryIsPending: true,
             alertCount: undefined,
             alertsError: undefined,
             criticalAlertCount: undefined,
@@ -181,6 +186,25 @@ export class Maintenance extends Component {
                     this.setState({ jobsError, jobsIsPending: false })
             )
         );
+
+        if (global.DeploymentConfig.isADXDeployed) {
+            this.subscriptions.push(
+                TelemetryService.getLogCountByDevice(deviceLogParams).subscribe(
+                    (deviceLogsSummary) => {
+                        this.setState({
+                            deviceLogsSummary,
+                            deviceLogsSummaryIsPending: false,
+                            lastUpdated: moment(),
+                        });
+                    },
+                    (deviceLogsSummaryError) =>
+                        this.setState({
+                            deviceLogsSummaryError,
+                            deviceLogsSummaryIsPending: false,
+                        })
+                )
+            );
+        }
     };
 
     UNSAFE_componentWillMount() {
@@ -268,6 +292,9 @@ export class Maintenance extends Component {
                 jobs,
                 jobsIsPending,
                 jobsError,
+                deviceLogsSummary,
+                deviceLogsSummaryIsPending,
+                deviceLogsSummaryError,
                 failedJobsCount,
                 succeededJobsCount,
                 jobsCount,
@@ -317,13 +344,22 @@ export class Maintenance extends Component {
                     this,
                     "Jobs_ColumnArranged"
                 ),
+            },
+            deviceLogsSummaryProps = {
+                isPending: deviceLogsSummaryIsPending,
+                deviceLogsSummary,
+                error: deviceLogsSummaryError,
+                onColumnMoved: this.onColumnMoved.bind(
+                    this,
+                    "Logs_ColumnArranged"
+                ),
             };
 
         return (
             <Switch>
                 <Route
                     exact
-                    path={"/maintenance/:path(notifications|jobs)"}
+                    path={"/maintenance/:path(notifications|jobs|deviceLogs)"}
                     render={(routeProps) => (
                         <SummaryContainer
                             {...generalProps}
@@ -336,6 +372,7 @@ export class Maintenance extends Component {
                             jobsCount={jobsCount}
                             alertProps={alertProps}
                             jobProps={jobProps}
+                            deviceLogsSummaryProps={deviceLogsSummaryProps}
                         />
                     )}
                 />
@@ -368,17 +405,19 @@ export class Maintenance extends Component {
                         />
                     )}
                 />
-                <Route
-                    exact
-                    path={"/maintenance/deviceLogs/:id"}
-                    render={(routeProps) => (
-                        <ErrorLogDetailsContainer
-                            {...generalProps}
-                            {...jobProps}
-                            {...routeProps}
-                        />
-                    )}
-                />
+                {global.DeploymentConfig.isADXDeployed && (
+                    <Route
+                        exact
+                        path={"/maintenance/deviceLog/:id"}
+                        render={(routeProps) => (
+                            <DeviceLogDetailsContainer
+                                {...generalProps}
+                                {...deviceLogsSummaryProps}
+                                {...routeProps}
+                            />
+                        )}
+                    />
+                )}
                 <Redirect to="/maintenance/jobs" />
             </Switch>
         );

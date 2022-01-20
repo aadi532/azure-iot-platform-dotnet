@@ -43,8 +43,8 @@ import {
 } from "components/pages/dashboard/panels/telemetry";
 import { transformTelemetryResponse } from "components/pages/dashboard/panels";
 import { getEdgeAgentStatusCode } from "utilities";
-
 import { delay, map, mergeMap, switchMap, tap } from "rxjs/operators";
+import { Link } from "react-router-dom";
 
 const classnames = require("classnames/bind");
 const css = classnames.bind(require("./deviceDetails.module.scss"));
@@ -89,7 +89,6 @@ export class DeviceDetails extends Component {
             deviceUploads: undefined,
             deviceDeployments: undefined,
             expandedValue: false,
-            errorLogs: undefined,
         };
         this.baseState = this.state;
         this.columnDefs = [
@@ -128,7 +127,6 @@ export class DeviceDetails extends Component {
         this.fetchAlerts(deviceId);
         this.fetchDeviceUploads(deviceId);
         this.fetchDeviceDeployments(deviceId);
-        this.fetchErrorLogs(deviceId);
 
         const [hours = 0, minutes = 0, seconds = 0] = interval
                 .split(":")
@@ -256,7 +254,6 @@ export class DeviceDetails extends Component {
         this.alertSubscription.unsubscribe();
         this.telemetrySubscription.unsubscribe();
         this.deviceUploadsSubscription.unsubscribe();
-        this.errorLogsSubscription.unsubscribe();
     }
 
     copyDevicePropertiesToClipboard = () => {
@@ -352,19 +349,6 @@ export class DeviceDetails extends Component {
         }
     }
 
-    fetchErrorLogs = (deviceId) => {
-        this.errorLogsSubscription = TelemetryService.getErrorLogsByDevice([
-            deviceId,
-            "PT24H",
-        ]).subscribe((errorLogsByDevices) => {
-            if (errorLogsByDevices[0]) {
-                this.setState({
-                    errorLogs: errorLogsByDevices[0].ErrorLogs,
-                });
-            }
-        });
-    };
-
     render() {
         const {
                 t,
@@ -410,8 +394,7 @@ export class DeviceDetails extends Component {
                   }","measureName":"${
                       Object.keys(telemetry).sort()[0]
                   }","predicate":"'${device.id}'"}]`
-                : undefined,
-            errorLogs = this.state.errorLogs || [];
+                : undefined;
 
         return (
             <Flyout.Container
@@ -465,6 +448,16 @@ export class DeviceDetails extends Component {
                                                       "devices.flyouts.details.notConnected"
                                                   )}
                                         </div>
+                                        {global.DeploymentConfig
+                                            .isADXDeployed && (
+                                            <div className={css("device-log")}>
+                                                <Link
+                                                    to={`/maintenance/deviceLog/${device.id}`}
+                                                >
+                                                    ...For Logs
+                                                </Link>
+                                            </div>
+                                        )}
                                     </Cell>
                                 </Row>
                             </Grid>
@@ -1153,73 +1146,6 @@ export class DeviceDetails extends Component {
                                                                     {formatTime(
                                                                         deployment.date
                                                                     )}
-                                                                </Cell>
-                                                            </Row>
-                                                        )
-                                                    )}
-                                                </GridBody>
-                                            </Grid>
-                                        )}
-                                    </div>
-                                </Section.Content>
-                            </Section.Container>
-                            <Section.Container>
-                                <Section.Header>Error Logs</Section.Header>
-                                <Section.Content>
-                                    <SectionDesc>
-                                        Error Logs Send by Device
-                                    </SectionDesc>
-                                    <div
-                                        className={css(
-                                            "device-details-deviceuploads-contentbox"
-                                        )}
-                                    >
-                                        {errorLogs.length === 0 &&
-                                            "No Error Logs"}
-                                        {errorLogs.length > 0 && (
-                                            <Grid
-                                                className={css(
-                                                    "device-details-deviceuploads"
-                                                )}
-                                            >
-                                                <GridHeader>
-                                                    <Row>
-                                                        <Cell className="col-7">
-                                                            {t(
-                                                                "devices.flyouts.details.deviceUploads.fileName"
-                                                            )}
-                                                        </Cell>
-                                                        <Cell className="col-3">
-                                                            {t(
-                                                                "devices.flyouts.details.deviceUploads.action"
-                                                            )}
-                                                        </Cell>
-                                                    </Row>
-                                                </GridHeader>
-                                                <GridBody>
-                                                    {errorLogs.map(
-                                                        (upload, idx) => (
-                                                            <Row key={idx}>
-                                                                <Cell className="col-3">
-                                                                    {
-                                                                        upload.Name
-                                                                    }
-                                                                </Cell>
-                                                                <Cell className="col-3">
-                                                                    <Btn
-                                                                        svg={
-                                                                            svgs.upload
-                                                                        }
-                                                                        className={css(
-                                                                            "download-deviceupload"
-                                                                        )}
-                                                                        onClick={() =>
-                                                                            this.downloadFile(
-                                                                                upload.BlobName,
-                                                                                upload.Name
-                                                                            )
-                                                                        }
-                                                                    ></Btn>
                                                                 </Cell>
                                                             </Row>
                                                         )

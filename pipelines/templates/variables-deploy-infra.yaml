@@ -80,7 +80,9 @@ variables:
   - name: loadGrafanaDashboard
     value: true
   - name: azureFileShareName
-    value: grafanadashboard     
+    value: grafanadashboard
+  - name: blobEventGridName
+    value: ${{parameters.applicationCode}}-$(blobEventGridPartialName)-${{parameters.environmentCategory}}
 
 
 

@@ -1,0 +1,45 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "blobEventGridSystemTopicName": {
+            "type": "String",
+            "metadata": {
+                "description": "name of the Event Grid System Topic."
+            }
+        },
+        "storageAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "name of the Storage account."
+            }
+        },
+        "subscriptionId": {
+            "type": "string",
+            "defaultValue": "[subscription().subscriptionId]",
+            "metadata": {
+                "description": "Subscription Id where storage account exists"
+            }
+        },
+        "resourceGroup": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Resource group name where storage account exists"
+            }
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "apiVersion": "2021-12-01",
+            "location": "centralus",
+            "name": "[parameters('blobEventGridSystemTopicName')]",
+            "properties": {
+                "source": "[concat('/subscriptions/', parameters('subscriptionId'), '/resourceGroups/', parameters('resourceGroup'), '/providers/Microsoft.Storage/storageAccounts/', parameters('storageAccountName').name)]",
+                "topicType": "Microsoft.Storage.StorageAccounts"
+            },
+            "type": "Microsoft.EventGrid/systemTopics"
+        }
+    ]
+}

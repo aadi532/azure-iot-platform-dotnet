@@ -196,24 +196,25 @@ export const toDeviceUploadsModel = (response = []) => {
     return data;
 };
 
-export const toErrorLogsForDevicesModel = (response = {}) =>
-    getItems(response).map(toErrorLogsForDeviceModel);
+export const toDeviceLogsModel = (response = {}) =>
+    getItems(response).map(toDeviceLogModel);
 
-export const toErrorLogsForDeviceModel = (errorLogsByDevice = {}) => {
-    const model = camelCaseReshape(errorLogsByDevice, {
-        deviceId: "DeviceId",
-        count: "Count",
+export const toDeviceLogModel = (deviceLog = {}) => {
+    return camelCaseReshape(deviceLog, {
+        type: "type",
+        message: "message",
+        stack: "stack",
+        timeStamp: "timeStamp",
     });
-    return update(model, {
-        ErrorLogs: {
-            $set: errorLogsByDevice.ErrorLogs.map((x) =>
-                camelCaseReshape(x, {
-                    id: "Id",
-                    name: "Name",
-                    blobName: "BlobName",
-                    dateCreated: "DateCreated",
-                })
-            ),
-        },
+};
+
+export const toLogCountByDevicesModel = (response = {}) =>
+    getItems(response).map(toLogCountByDeviceModel);
+
+export const toLogCountByDeviceModel = (deviceLog = {}) => {
+    return camelCaseReshape(deviceLog, {
+        deviceId: "deviceId",
+        count: "count",
+        lastRecordedDate: "lastRecordedDate",
     });
 };

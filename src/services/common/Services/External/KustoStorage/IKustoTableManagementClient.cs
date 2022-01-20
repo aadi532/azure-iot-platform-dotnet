@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using Kusto.Data;
 using Kusto.Data.Common;
+using Kusto.Data.Ingestion;
 
 namespace Mmm.Iot.Common.Services.External.KustoStorage
 {
@@ -13,7 +14,7 @@ namespace Mmm.Iot.Common.Services.External.KustoStorage
     {
         void CreateTable(string tableName, IEnumerable<Tuple<string, string>> rowFields, string databaseName);
 
-        void CreateTableMapping(string tableMappingName, IEnumerable<ColumnMapping> mapping, string tableName, string databaseName);
+        void CreateTableMapping(string tableMappingName, IEnumerable<ColumnMapping> mapping, string tableName, string databaseName, IngestionMappingKind ingestionMappingKind = IngestionMappingKind.Json);
 
         void EnableStreamingIngestionPolicyToTable(string tableName, string databaseName);
 

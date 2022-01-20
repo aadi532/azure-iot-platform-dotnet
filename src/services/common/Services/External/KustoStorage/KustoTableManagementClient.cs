@@ -43,12 +43,12 @@ namespace Mmm.Iot.Common.Services.External.KustoStorage
             }
         }
 
-        public void CreateTableMapping(string tableMappingName, IEnumerable<ColumnMapping> mapping, string tableName, string databaseName)
+        public void CreateTableMapping(string tableMappingName, IEnumerable<ColumnMapping> mapping, string tableName, string databaseName, Kusto.Data.Ingestion.IngestionMappingKind ingestionMappingKind = Kusto.Data.Ingestion.IngestionMappingKind.Json)
         {
             try
             {
                 var command = CslCommandGenerator.GenerateTableMappingCreateCommand(
-                           Kusto.Data.Ingestion.IngestionMappingKind.Json,
+                           ingestionMappingKind,
                            tableName,
                            tableMappingName,
                            mapping);

@@ -95,6 +95,8 @@ jobs:
           echo "variable: dataExplorerClusterPartialName: $(dataExplorerClusterPartialName)"
           echo "variable: dataExplorerClusterName: $(dataExplorerClusterName)"
           echo "variable: telemetryStorageType: ${{parameters.telemetryStorageType}}"
+          echo "variable: blobEventGridPartialName: $(blobEventGridPartialName)"
+          echo "variable: blobEventGridName: $(blobEventGridName)"
         displayName: Print variables
 
   - job: toggleTelemetryStorage
@@ -973,6 +975,84 @@ jobs:
                     echo "Azure Data Explorer does not exists"
               fi
 
+  - job: BlobEventGridSystemTopic
+    displayName: Provision Blob Event Grid System Topic
+    condition: and(succeeded(), eq(dependencies.toggleTelemetryStorage.outputs['toggleTelemetryStorageName.toggleTelemetryStorageValue'], 'ade'))
+    dependsOn:
+      - storageAccount
+      - dataExplorer    
+    variables:
+      - template: variables-deploy-infra.yaml
+        parameters:
+          subscriptionName: ${{parameters.subscriptionName}}
+          locationName: ${{parameters.locationName}}
+          environmentName: ${{parameters.environmentName}}
+          subscriptionId: ${{parameters.subscriptionId}}
+          applicationCode: ${{parameters.applicationCode}}
+          applicationShortCode: ${{parameters.applicationShortCode}}
+          environmentCategory: ${{parameters.environmentCategory}}
+    steps:
+      - checkout: self
+        displayName: Checkout repository
+  
+      - template: apply-arm-tags.yaml
+        parameters:
+          environment: ${{parameters.environmentName}}
+  
+      - task: AzureResourceGroupDeployment@2
+        displayName: Provision Blob Event Grid System Topic
+        inputs:
+          azureSubscription: ${{parameters.subscriptionName}}
+          action: Create Or Update Resource Group
+          resourceGroupName: $(resourceGroupName)
+          location: ${{parameters.locationName}}
+          templateLocation: Linked artifact
+          csmFile: $(armTemplatesDirectory)/$(blobEventGridPartialName).json
+          csmParametersFile: $(armParametersDirectory)/$(blobEventGridPartialName).json
+          overrideParameters: -blobEventGridSystemTopicName $(blobEventGridName) -storageAccountName $(storageAccountName) -subscriptionId ${{parameters.subscriptionId}} -resourceGroup $(resourceGroupName) 
+          deploymentMode: Incremental
+  
+      - template: steps-delete-oldest-deployment.yaml
+        parameters:
+          subscriptionName: ${{parameters.subscriptionName}}
+          deploymentPartialName: $(blobEventGridPartialName)
+          resourceGroupName: $(resourceGroupName)
+
+
+  - job: removeBlobEventGridSystemTopic
+    displayName: Remove not in use blob event grid
+    condition: and(succeeded(), ne(dependencies.toggleTelemetryStorage.outputs['toggleTelemetryStorageName.toggleTelemetryStorageValue'], 'ade'))
+    dependsOn:
+      - removeDataExplorer
+    variables:
+      - template: variables-deploy-infra.yaml
+        parameters:
+          subscriptionName: ${{parameters.subscriptionName}}
+          locationName: ${{parameters.locationName}}
+          environmentName: ${{parameters.environmentName}}
+          subscriptionId: ${{parameters.subscriptionId}}
+          applicationCode: ${{parameters.applicationCode}}
+          applicationShortCode: ${{parameters.applicationShortCode}}
+          environmentCategory: ${{parameters.environmentCategory}}
+    steps:
+      - checkout: none
+  
+      - task: AzureCLI@2
+        displayName: Check and Remove blob event grid
+        inputs:
+          azureSubscription: ${{parameters.subscriptionName}}
+          addSpnToEnvironment: true
+          scriptLocation: inlineScript
+          scriptType: bash
+          inlineScript: |-
+              systemTopicName=$(az eventgrid system-topic list -g $(resourceGroupName) | jq -r .[0].name)
+              if [ -n "$systemTopicName" ] && [ "$systemTopicName" == "$(blobEventGridName)" ]
+              then
+                    az eventgrid system-topic delete -n $(blobEventGridName) -g $(resourceGroupName) --yes
+              else
+                    echo "Blob Event Grid does not exists"
+              fi
+
   - job: populateAppConfiguration
     displayName: Populate App Configuration
     dependsOn:
@@ -1037,7 +1117,8 @@ jobs:
             az appconfig kv set --key DeviceTelemetryService:Messages:TelemetryStorageType  --value ${telemetryStorageType,,} --name $(appConfigurationName) --yes
             az appconfig kv set --key Global:LogAnalytics:Name                    --value $(omsWorkspaceName) --name $(appConfigurationName) --yes
             az appconfig kv set --key Global:LoadGrafanaDashboard                 --value $(loadGrafanaDashboard) --name $(appConfigurationName) --yes
-            
+            az appconfig kv set --key Global:BlobEventGridSystemTopic:Name        --value $(blobEventGridName) --name $(appConfigurationName) --yes
+
             grafanaUrl="https://$(aksName).$(locationName).cloudapp.azure.com/grafana"
             az appconfig kv set --key Global:ExternalDependencies:GrafanaUrl --value $grafanaUrl --name $(appConfigurationName) --yes
             appInsightKey=$(az resource show -g $(resourceGroupName) -n $(appInsightsName) --resource-type "Microsoft.Insights/components" --query properties.InstrumentationKey --output tsv)

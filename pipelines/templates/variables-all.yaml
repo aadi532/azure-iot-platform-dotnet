@@ -28,3 +28,4 @@ variables:
   storageAccountPartialName: storageacct
   sendgridAccountPartialName: sendgrid
   dataExplorerClusterPartialName: kusto
+  blobEventGridPartialName: blobeventgrid

@@ -12,6 +12,7 @@ import { TimeIntervalDropdownContainer as TimeIntervalDropdown } from "component
 import { ResetActiveDeviceQueryBtnContainer as ResetActiveDeviceQueryBtn } from "components/shell/resetActiveDeviceQueryBtn";
 import { Notifications } from "./notifications";
 import { Jobs } from "./jobs";
+import { DeviceLogs } from "./deviceLogs";
 import {
     ComponentArray,
     ContextMenu,
@@ -102,7 +103,9 @@ export class Summary extends Component {
                             time={this.props.lastUpdated}
                             isPending={
                                 this.props.alertProps.isPending ||
-                                this.props.jobProps.isPending
+                                this.props.jobProps.isPending ||
+                                (global.DeploymentConfig.isADXDeployed &&
+                                    this.props.deviceLogsSummaryProps.isPending)
                             }
                             t={this.props.t}
                             isShowIconOnly={true}
@@ -193,6 +196,19 @@ export class Summary extends Component {
                         >
                             {this.props.t("maintenance.jobs")}
                         </NavLink>
+                        {global.DeploymentConfig.isADXDeployed && (
+                            <NavLink
+                                to={"/maintenance/deviceLogs"}
+                                className={maintenanceCss("tab")}
+                                activeClassName={maintenanceCss("active")}
+                                onClick={this.tabClickHandler.bind(
+                                    this,
+                                    "JobsTab"
+                                )}
+                            >
+                                {this.props.t("maintenance.deviceLogs")}
+                            </NavLink>
+                        )}
                     </div>
                     <div className={css("grid-container")}>
                         <Switch>
@@ -218,6 +234,19 @@ export class Summary extends Component {
                                     />
                                 )}
                             />
+                            {global.DeploymentConfig.isADXDeployed && (
+                                <Route
+                                    exact
+                                    path={"/maintenance/deviceLogs"}
+                                    render={() => (
+                                        <DeviceLogs
+                                            {...this.props}
+                                            {...this.props
+                                                .deviceLogsSummaryProps}
+                                        />
+                                    )}
+                                />
+                            )}
                         </Switch>
                     </div>
                 </PageContent>

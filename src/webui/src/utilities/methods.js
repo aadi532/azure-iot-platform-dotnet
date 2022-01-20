@@ -283,12 +283,7 @@ export const getDeviceStatusTranslation = (status, t) =>
 
 /* A helper method to copy text to the clipbaord */
 export const copyToClipboard = (data) => {
-    const textField = document.createElement("textarea");
-    textField.innerText = data;
-    document.body.appendChild(textField);
-    textField.select();
-    document.execCommand("copy");
-    textField.remove();
+    navigator.clipboard.writeText(data);
 };
 
 export const isValidExtension = (file) => {

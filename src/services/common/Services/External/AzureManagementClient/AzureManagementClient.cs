@@ -33,6 +33,7 @@ namespace Mmm.Iot.Common.Services.External.Azure
             this.AsaManagementClient = clientFactory.CreateAsaManagementClient();
             this.KustoClusterManagementClient = clientFactory.CreateKustoClusterManagementClient();
             this.EventHubsManagementClient = clientFactory.CreateEventHubsManagementClient();
+            this.EventGridManagementClient = new EventGridsManagementClient(this.rmClient, this.config);
         }
 
         public IoTHubManagementClient IotHubManagementClient { get; }
@@ -44,6 +45,8 @@ namespace Mmm.Iot.Common.Services.External.Azure
         public KustoClusterManagementClient KustoClusterManagementClient { get; }
 
         public EventHubsManagementClient EventHubsManagementClient { get; }
+
+        public EventGridsManagementClient EventGridManagementClient { get; }
 
         public async Task<StatusResultServiceModel> StatusAsync()
         {

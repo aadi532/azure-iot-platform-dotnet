@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace Mmm.Iot.DeviceTelemetry.WebService.Models
 {
-    public class QueryApiModel
+    public class QueryApiModel : BaseQueryApiModel
     {
         public QueryApiModel()
         {
@@ -34,21 +34,6 @@ namespace Mmm.Iot.DeviceTelemetry.WebService.Models
             this.Limit = limit;
             this.Devices = devices;
         }
-
-        [JsonProperty(PropertyName = "From")]
-        public string From { get; set; }
-
-        [JsonProperty(PropertyName = "To")]
-        public string To { get; set; }
-
-        [JsonProperty(PropertyName = "Order")]
-        public string Order { get; set; }
-
-        [JsonProperty(PropertyName = "Skip")]
-        public int? Skip { get; set; }
-
-        [JsonProperty(PropertyName = "Limit")]
-        public int? Limit { get; set; }
 
         [JsonProperty(PropertyName = "Devices")]
         public List<string> Devices { get; set; }

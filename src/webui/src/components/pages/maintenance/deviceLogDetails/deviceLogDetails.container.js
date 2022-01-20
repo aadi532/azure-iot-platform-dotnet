@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 
 import { connect } from "react-redux";
-import { ErrorLogDetails } from "./errorLogDetails";
+import { DeviceLogDetails } from "./deviceLogDetails";
 import { epics as appEpics } from "store/reducers/appReducer";
 
 // Wrap the dispatch method
@@ -10,7 +10,7 @@ const mapDispatchToProps = (dispatch) => ({
         dispatch(appEpics.actions.logEvent(diagnosticsModel)),
 });
 
-export const ErrorLogDetailsContainer = connect(
+export const DeviceLogDetailsContainer = connect(
     null,
     mapDispatchToProps
-)(ErrorLogDetails);
+)(DeviceLogDetails);

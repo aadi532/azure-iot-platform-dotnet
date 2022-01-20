@@ -68,6 +68,7 @@ namespace Mmm.Iot.TenantManager.Services
         private string eventHubNamespaceFormat = "eventhub-{0}";
         private string grafanaUrlFormat = "tenant:{0}:grafanaUrl";
         private string grafanaOrgFormat = "tenant:{0}:grafanaOrgId";
+        private string blobEventSubscriptionFormat = "{0}-eventsub";
 
         public TenantContainer(
             ILogger<TenantContainer> logger,
@@ -441,6 +442,18 @@ namespace Mmm.Iot.TenantManager.Services
                 {
                     this.logger.LogInformation(e, "Unable to to successfully add Delete grafana dashboard for tenant {tenantId}", tenantId);
                     deletionRecord["grafana"] = false;
+                }
+
+                string blobEventSubscriptionName = string.Format(this.blobEventSubscriptionFormat, tenantId);
+                try
+                {
+                    await this.tableStorageClient.InsertAsync(TenantOperationTable, new TenantOperationModel(tenantId, TenantOperation.BlobEventSubscriptionDeletion, blobEventSubscriptionName));
+                    deletionRecord["BlobEventSubscription"] = true;
+                }
+                catch (Exception e)
+                {
+                    deletionRecord["BlobEventSubscription"] = false;
+                    this.logger.LogInformation(e, $"An error occurred while deleting the {blobEventSubscriptionName} EventGrid Event Subscription for tenant {tenantId}", blobEventSubscriptionName, tenantId);
                 }
             }
 

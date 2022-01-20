@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 
 import "rxjs";
-import { of, forkJoin } from "rxjs";
+import { of } from "rxjs";
 import moment from "moment";
 import { schema, normalize } from "normalizr";
 import update from "immutability-helper";
@@ -20,7 +20,7 @@ import {
     getActiveDeviceGroupMapping,
     getDefaultColumnMapping,
 } from "./appReducer";
-import { IoTHubManagerService, TelemetryService } from "services";
+import { IoTHubManagerService } from "services";
 import {
     createReducerScenario,
     createEpicScenario,
@@ -64,27 +64,12 @@ export const epics = createEpicScenario({
                     );
                 });
 
-            return forkJoin([
-                IoTHubManagerService.getDevices(conditions, columnMappings),
-                TelemetryService.getErrorLogsByDevice([], "PT24H"),
-            ]).pipe(
-                map(([response, errorLogsResponse]) => {
+            return IoTHubManagerService.getDevices(
+                conditions,
+                columnMappings
+            ).pipe(
+                map((response) => {
                     cToken = response.continuationToken;
-                    if (errorLogsResponse && response.itemsWithMapping) {
-                        response.itemsWithMapping =
-                            response.itemsWithMapping.map((x) => {
-                                var errorLogs = errorLogsResponse.find(
-                                    (y) => y.DeviceId === x.id
-                                );
-
-                                x.hasLogs = (errorLogs || {}).Count
-                                    ? "Yes"
-                                    : "No";
-                                return x;
-                            });
-                    }
-
-                    console.log(response);
                     return response;
                 }),
                 map(toActionCreator(redux.actions.updateDevices, fromAction)),

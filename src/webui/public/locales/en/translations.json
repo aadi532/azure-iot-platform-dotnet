@@ -857,6 +857,7 @@
         "title": "Maintenance",
         "total": "Total",
         "warning": "Warning",
+        "deviceLogs": "Device Logs",
         "alertGrid": {
             "totalCount": "Total count",
             "open": "Open",

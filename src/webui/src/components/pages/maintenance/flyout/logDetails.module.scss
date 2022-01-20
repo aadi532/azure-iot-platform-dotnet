@@ -1,0 +1,18 @@
+// Copyright (c) Microsoft. All rights reserved.
+
+@import 'src/styles/mixins';
+@import 'src/styles/themes';
+
+.log-details-text-box {
+  position: relative;
+  font-size: 12px;
+  background: #F3F3F3;
+  border: 1px solid #c0c0c0;
+  margin: 5px 0 0 0;
+  overflow-x: auto;
+  font-family: "Consolas",Courier,"Courier New",monospace;
+  padding: 5px;
+  overflow: auto;
+  max-height: 250px;
+  white-space: pre;
+}

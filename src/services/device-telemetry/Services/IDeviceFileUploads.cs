@@ -15,13 +15,5 @@ namespace Mmm.Iot.DeviceTelemetry.Services
         Task<IEnumerable<DeviceUpload>> GetDeviceUploads(string tenantId, string deviceId);
 
         CloudBlockBlob Download(string tenantId, string blobName);
-
-        Task<List<ErrorLog>> ListErrorlogAsync(
-            DateTimeOffset? from,
-            DateTimeOffset? to,
-            string order,
-            int skip,
-            int limit,
-            string[] devices);
     }
 }

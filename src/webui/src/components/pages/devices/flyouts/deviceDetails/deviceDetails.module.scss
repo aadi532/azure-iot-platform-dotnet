@@ -20,6 +20,7 @@
     .device-name { @include rem-fallback(font-size, 18px); }
     .device-simulated { @include rem-fallback(font-size, 10px); }
     .device-connected { @include rem-fallback(font-size, 14px); }
+    .device-log { @include rem-fallback(font-size, 14px); }
 
     .device-icon svg {
       @include rem-fallback(height, 72px);

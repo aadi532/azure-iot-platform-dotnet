@@ -9,6 +9,7 @@ param(
     [string] $clusterName,
     [string] $subscriptionId,
     [string] $appConfigurationName
+    [string] $blobEventGridSystemTopicName
 )
 
 
@@ -34,6 +35,7 @@ try {
     az cloud set -n AzureCloud
     az login --service-principal -u $servicePrincipalId --password $servicePrincipalKey --tenant $tenantId --allow-no-subscriptions
     az account set --subscription $subscriptionId
+    az extension add -n eventgrid
 
 
     function Update-TelemetryInfra {
@@ -666,6 +668,81 @@ try {
         catch {
             Write-Host("An Error occured.")
             Write-Host($_)
+        }
+    }
+
+    function Update-DeviceLogsInfra {
+        param(
+            [string] $tenantId,
+            [string] $eventhubNamespace,
+            [string] $resourceGroupName,
+            [string] $clusterName,
+            [string] $clusterLocation,
+            [string] $databaseName,
+            [string] $connStr
+        )
+  
+  
+        $deviceLogsEventhubName = "$tenantId-devicelogs"
+
+        $isDeviceLogsEventHubExists = Get-AzEventHub -ResourceGroupName $resourceGroupName -NamespaceName $eventhubNamespace -EventHubName $deviceLogsEventhubName -ErrorAction Ignore
+        if ($null -eq $isDeviceLogsEventHubExists) {
+            Write-Host "############## Creating EventHub $deviceLogsEventhubName" 
+            New-AzEventHub -ResourceGroupName $resourceGroupName -NamespaceName $eventhubNamespace -EventHubName $deviceLogsEventhubName -MessageRetentionInDays 1
+        }
+        else { 
+            Write-Host "############## EventHub Already exists $deviceLogsEventhubName." 
+        }
+		  
+        $deviceLogsEventHubResourceId = (Get-AzEventHub -ResourceGroupName $resourceGroupName -NamespaceName $eventhubNamespace -EventHubName $deviceLogsEventhubName).Id
+        $deviceLogsMappingName = "'deviceLogsMapping-" + $tenantId + "'"
+        $deviceLogsDataMappingName = $deviceLogsMappingName.Split("'")[1]
+        $deviceLogsDataconnectionName = "DeviceLogsDataConnect-" + $tenantId.Split("-")[0]
+
+        # Event Grid Subscriptions string constants
+        $deviceLogsEventSubscriptionName = "$tenantId-eventsub"
+        $subjectBeginsWith = "/blobServices/default/containers/$tenantId-iot-file-upload"
+
+        $isDeviceLogsEventSubExists = az eventgrid system-topic event-subscription show --name $deviceLogsEventSubscriptionName -g $resourceGroupName --system-topic-name $blobEventGridSystemTopicName 
+
+        if ($null -eq $isDeviceLogsEventSubExists) {
+            Write-Host "############## Creating Event Grid Event Subscription $deviceLogsEventSubscriptionName" 
+            az eventgrid system-topic event-subscription create --name $deviceLogsEventSubscriptionName \
+                -g $resourceGroupName \
+                --system-topic-name $blobEventGridSystemTopicName \
+                --endpoint $deviceLogsEventHubResourceId \
+                --endpoint-type eventhub \
+                --event-delivery-schema eventgridschema \
+                --subject-begins-with $subjectBeginsWith \
+                --subject-ends-with .csv \
+                --advanced-filter subject StringContains /log/ \
+                --included-event-types Microsoft.Storage.BlobCreated
+        }
+        else { 
+            Write-Host "############## Event Grid Event Subscription Already exists $deviceLogsEventSubscriptionName." 
+        }
+
+
+        Get-AzKustoDatabase -ClusterName $clusterName -ResourceGroupName $resourceGroupName -Name $databaseName  
+
+        #change the names in the script file for mapping Name
+        (Get-Content -path .\pipelines\cd\ExistingTenantsADE\DeviceLogTableCreation.txt -Raw) -replace 'MAPPINGNAME', $deviceLogsMappingName | Set-Content -Path .\pipelines\cd\ExistingTenantsADE\DeviceLogTableCreation.txt -ErrorAction Stop
+        Write-Host "############## Changed the path in the script file!"
+			   
+        Microsoft.Azure.Kusto.Tools.5.1.0\Tools\Kusto.Cli.exe $connStr -script:".\pipelines\cd\ExistingTenantsADE\DeviceLogTableCreation.txt"
+        Write-Host "############## Executed the Kusto Script."
+
+        #REVERT change the names in the script file for mapping Name
+        (Get-Content -path .\pipelines\cd\ExistingTenantsADE\DeviceLogTableCreation.txt -Raw) -replace $deviceLogsMappingName, 'MAPPINGNAME' | Set-Content -Path .\pipelines\cd\ExistingTenantsADE\DeviceLogTableCreation.txt -ErrorAction Stop
+        Write-Host "############## Reverted the change in the script file."
+			   
+        ##checking if Name exists.
+        if ((Test-AzKustoDataConnectionNameAvailability -ClusterName $clusterName -DatabaseName $databaseName -ResourceGroupName $resourceGroupName -Name $deviceLogsDataconnectionName).NameAvailable) {
+            New-AzKustoDataConnection -ResourceGroupName $resourceGroupName -ClusterName $clusterName -DatabaseName $databaseName -DataConnectionName $deviceLogsDataconnectionName -Location $clusterLocation -Kind "EventGrid" -EventHubResourceId $deviceLogsEventHubResourceId -StorageAccountResourceId  -DataFormat "CSV" -ConsumerGroup '$Default' -TableName "DeviceLog" -MappingRuleName $deviceLogsDataMappingName -IgnoreFirstRecord "false" -BlobStorageEventType "Microsoft.Storage.BlobCreated"
+            Write-Host "############## Created Data Connection."
+        }
+        else {
+            write-host("############## There is already a Data conection with the Name $deviceTwinDataconnectionName.")
         }
     }
 

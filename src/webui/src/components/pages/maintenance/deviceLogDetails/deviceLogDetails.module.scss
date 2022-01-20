@@ -1,0 +1,21 @@
+// Copyright (c) Microsoft. All rights reserved.
+
+@import 'src/styles/variables';
+@import 'src/styles/mixins';
+@import 'src/styles/themes';
+
+.device-log-container {
+  padding: $baseContentPadding;
+
+  @include themify($themes) {
+    .status { color: themed('colorContentText'); }
+  }
+}
+
+@media only screen and (max-width:1024px){
+  :global(.btn){
+    margin: 0px !important;
+    padding:0% !important;
+  }
+
+}
