@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Mmm.Iot.Common.Services.Config;
 using Mmm.Iot.Common.Services.Exceptions;
 using Mmm.Iot.Common.Services.Filters;
+using Mmm.Iot.Common.Services.Models;
 using Mmm.Iot.DeviceTelemetry.Services;
 using Mmm.Iot.DeviceTelemetry.Services.Models;
 using Mmm.Iot.DeviceTelemetry.WebService.Controllers.Helpers;
@@ -34,18 +35,26 @@ namespace Mmm.Iot.DeviceTelemetry.WebService.Controllers
         [Authorize("ReadAll")]
         public async Task<DeviceLogListApiModel> GetLogsByDevices([FromRoute] string deviceId, [FromBody] BaseQueryApiModel body)
         {
-            return await this.GetLogsByDeviceHelper(body.From, body.To, body.Order, body.Skip, body.Limit, deviceId);
+            if (this.appConfig.DeviceTelemetryService.Messages.TelemetryStorageType.Equals(TelemetryStorageTypeConstants.Ade, StringComparison.OrdinalIgnoreCase))
+            {
+                return await this.GetLogsByDeviceHelper(body.From, body.To, body.Order, body.Skip, body.Limit, deviceId);
+            }
+
+            throw new ResourceNotFoundException("Device Log Database is not available ");
         }
 
         [HttpPost("LogCountByDevice")]
         [Authorize("ReadAll")]
         public async Task<LogCountByDeviceListApiModel> GetLogCountByDevices([FromBody] QueryApiModel body)
         {
-            string[] deviceIds = body.Devices == null
-                ? new string[0]
-                : body.Devices.ToArray();
+            if (this.appConfig.DeviceTelemetryService.Messages.TelemetryStorageType.Equals(TelemetryStorageTypeConstants.Ade, StringComparison.OrdinalIgnoreCase))
+            {
+                string[] deviceIds = body.Devices == null ? new string[0] : body.Devices.ToArray();
 
-            return await this.GetLogCountByDeviceHelper(body.From, body.To, body.Order, body.Skip, body.Limit, deviceIds);
+                return await this.GetLogCountByDeviceHelper(body.From, body.To, body.Order, body.Skip, body.Limit, deviceIds);
+            }
+
+            throw new ResourceNotFoundException("Device Log Database is not available ");
         }
 
         private async Task<DeviceLogListApiModel> GetLogsByDeviceHelper(
