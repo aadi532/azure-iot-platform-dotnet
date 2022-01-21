@@ -35,7 +35,7 @@ modify_webui_config() {
 
   value=$(_get_configuration "DeviceTelemetryService:Messages:TelemetryStorageType" | sed 's/"//g' )
   if [ $value == "ade" ]; then
-    sed -i 's/isADXDeployed.*/isADXDeployed: true,/g' ./app/webui-config.js
+    sed -i 's/isADXDeployed.*/isADXDeployed: true,/g' /app/webui-config.js
   else
     sed -i 's/isADXDeployed.*/isADXDeployed: false,/g' /app/webui-config.js
   fi
