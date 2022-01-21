@@ -975,7 +975,7 @@ jobs:
                     echo "Azure Data Explorer does not exists"
               fi
 
-  - job: BlobEventGridSystemTopic
+  - job: blobEventGridSystemTopic
     displayName: Provision Blob Event Grid System Topic
     condition: and(succeeded(), eq(dependencies.toggleTelemetryStorage.outputs['toggleTelemetryStorageName.toggleTelemetryStorageValue'], 'ade'))
     dependsOn:

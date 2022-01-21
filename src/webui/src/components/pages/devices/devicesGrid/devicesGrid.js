@@ -355,7 +355,6 @@ export class DevicesGrid extends Component {
             onSortChanged: this.onSortChanged,
             gridControls: this.props.gridControls,
         };
-
         return [
             <PcsGrid key="device-grid-key" {...gridProps} />,
             this.getOpenFlyout(),
