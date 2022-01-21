@@ -19,23 +19,12 @@ namespace Mmm.Iot.DeviceTelemetry.Services
     {
         private const string FileUploadStore = "iot-file-upload";
         private const string DateFormat = "yyyy-MM-dd'T'HH:mm:sszzz";
-        private const string ErrorLogSchemaKey = "errorLog";
-        private const string CreatedKey = "created";
-        private const string DeviceIdKey = "deviceId";
         private readonly AppConfig config;
         private readonly ILogger logger;
-        private readonly IStorageClient storageClient;
-        private readonly IHttpContextAccessor httpContextAccessor;
 
-        public DeviceFileUploads(
-            AppConfig config,
-            IStorageClient storageClient,
-            IHttpContextAccessor contextAccessor,
-            ILogger<DeviceFileUploads> logger)
+        public DeviceFileUploads(AppConfig config, ILogger<DeviceFileUploads> logger)
         {
             this.config = config;
-            this.storageClient = storageClient;
-            this.httpContextAccessor = contextAccessor;
             this.logger = logger;
         }
 
