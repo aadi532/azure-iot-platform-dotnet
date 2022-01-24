@@ -5,12 +5,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Mmm.Iot.Common.Services.Config;
-using Mmm.Iot.Common.Services.External.CosmosDb;
 using Mmm.Iot.DeviceTelemetry.Services.Models;
 
 namespace Mmm.Iot.DeviceTelemetry.Services
