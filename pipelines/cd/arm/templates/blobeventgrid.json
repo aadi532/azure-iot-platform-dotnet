@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "blobEventGridSystemTopicName": {
-            "type": "String",
+            "type": "string",
             "metadata": {
                 "description": "name of the Event Grid System Topic."
             }
