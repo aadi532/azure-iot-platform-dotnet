@@ -11,6 +11,6 @@
       "environmentCategory": {"value": "dev"},
       "applicationCode": {"value": "crslbbiot"},
       "enableSoftDelete": { "value": true },
-      "softDeleteRetentionInDays": { "value": 90 }
+      "softDeleteRetentionInDays": { "value": 7 }
     }
   }
