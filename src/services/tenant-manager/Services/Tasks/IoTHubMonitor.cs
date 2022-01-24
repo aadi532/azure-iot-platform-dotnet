@@ -155,10 +155,10 @@ namespace Mmm.Iot.TenantManager.Services.Tasks
                                         this.config.Global.SubscriptionId,
                                         this.config.Global.ResourceGroup,
                                         eventHubNameSpace,
-                                        $"{item.TenantId}-devicelogs",
+                                        $"{item.TenantId}-devicelog",
                                         item.TenantId);
                                     await this.azureManagementClient.DeployTemplateAsync(template);
-                                    await this.ADXDeviceLogsSetup(item.TenantId, string.Format(IoTDatabaseNameFormat, item.TenantId), eventHubNameSpace);
+                                    await this.ADXDeviceLogSetup(item.TenantId, string.Format(IoTDatabaseNameFormat, item.TenantId), eventHubNameSpace);
 
                                     // Migrate DeviceGroups Data into ADX
                                     await this.MigrateDeviceGroupsToADX(item.TenantId);
@@ -226,7 +226,7 @@ namespace Mmm.Iot.TenantManager.Services.Tasks
 
             this.azureManagementClient.EventHubsManagementClient.CreateEventHub(eventHubNameSpace, $"{tenantId}-alerts");
 
-            this.azureManagementClient.EventHubsManagementClient.CreateEventHub(eventHubNameSpace, $"{tenantId}-devicelogs");
+            this.azureManagementClient.EventHubsManagementClient.CreateEventHub(eventHubNameSpace, $"{tenantId}-devicelog");
 
             // Set the Refresh Key to new connectionstring so the functions can update
             // values from AppConfiguration
@@ -420,12 +420,12 @@ namespace Mmm.Iot.TenantManager.Services.Tasks
             this.kustoTableManagementClient.AlterTablePolicy(alertsTableName, databaseName, alertsPolicyList);
         }
 
-        private async Task ADXDeviceLogsSetup(string tenantId, string databaseName, string eventHubNameSpace)
+        private async Task ADXDeviceLogSetup(string tenantId, string databaseName, string eventHubNameSpace)
         {
-            Console.WriteLine($"Creating deviceLogs table and mapping in {tenantId} DB in Data Explorer");
+            Console.WriteLine($"Creating deviceLog table and mapping in {tenantId} DB in Data Explorer");
 
-            var tableName = "DeviceLogs";
-            var tableMappingName = $"DevicelogEvents_JSON_Mapping-{tenantId}";
+            var tableName = "DeviceLog";
+            var tableMappingName = $"DevicelogEvents_CSV_Mapping-{tenantId}";
             var tableSchema = new[]
             {
                   Tuple.Create("DeviceId", "System.String"),
@@ -443,8 +443,8 @@ namespace Mmm.Iot.TenantManager.Services.Tasks
                   new ColumnMapping() { ColumnName = "TimeStamp", ColumnType = "datetime", Properties = new Dictionary<string, string>() { { MappingConsts.Ordinal, "4" } } },
             };
 
-            string dataConnectionName = $"DeviceLogsDataConnect-{tenantId.Substring(0, 8)}";
-            string eventHubName = $"{tenantId}-devicelogs";
+            string dataConnectionName = $"DeviceLogDataConnect-{tenantId.Substring(0, 8)}";
+            string eventHubName = $"{tenantId}-devicelog";
 
             this.kustoTableManagementClient.CreateTable(tableName, tableSchema, databaseName);
 
