@@ -8,7 +8,7 @@ param(
     [string] $tenantId,
     [string] $clusterName,
     [string] $subscriptionId,
-    [string] $appConfigurationName
+    [string] $appConfigurationName,
     [string] $blobEventGridSystemTopicName
 )
 
@@ -679,8 +679,8 @@ try {
             [string] $clusterName,
             [string] $clusterLocation,
             [string] $databaseName,
-            [string] $connStr
-            [string] $blobEventGridSystemTopicName
+            [string] $connStr,
+            [string] $blobEventGridSystemTopicName,
             [string] $storageAccountName
         )
   
@@ -709,15 +709,15 @@ try {
 
         if ($null -eq $isDeviceLogEventSubExists) {
             Write-Host "############## Creating Event Grid Event Subscription $deviceLogEventSubscriptionName" 
-            az eventgrid system-topic event-subscription create --name $deviceLogEventSubscriptionName \
-                -g $resourceGroupName \
-                --system-topic-name $blobEventGridSystemTopicName \
-                --endpoint $deviceLogEventHubResourceId \
-                --endpoint-type eventhub \
-                --event-delivery-schema eventgridschema \
-                --subject-begins-with $subjectBeginsWith \
-                --subject-ends-with .csv \
-                --advanced-filter subject StringContains /log/ \
+            az eventgrid system-topic event-subscription create --name $deviceLogEventSubscriptionName `
+                -g $resourceGroupName `
+                --system-topic-name $blobEventGridSystemTopicName `
+                --endpoint $deviceLogEventHubResourceId `
+                --endpoint-type eventhub `
+                --event-delivery-schema eventgridschema `
+                --subject-begins-with $subjectBeginsWith `
+                --subject-ends-with .csv `
+                --advanced-filter subject StringContains /log/ `
                 --included-event-types Microsoft.Storage.BlobCreated
         }
         else { 
@@ -835,8 +835,8 @@ try {
             -clusterName $clusterName `
             -clusterLocation $clusterLocation `
             -databaseName $databaseName `
-            -connStr $connStr
-            -blobEventGridSystemTopicName $blobEventGridSystemTopicName
+            -connStr $connStr `
+            -blobEventGridSystemTopicName $blobEventGridSystemTopicName `
             -storageAccountName $storageAccountName
 		
         az appconfig kv set --name $appConfigurationName --key "tenant:refreshappconfig" --value $iotTenantId  --yes
