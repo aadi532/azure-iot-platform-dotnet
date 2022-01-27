@@ -741,7 +741,7 @@ try {
         ##checking if Name exists.
         if ((Test-AzKustoDataConnectionNameAvailability -ClusterName $clusterName -DatabaseName $databaseName -ResourceGroupName $resourceGroupName -Name $deviceLogDataconnectionName).NameAvailable) {
             $storageAccountResourceId = (Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccountName).Id
-            New-AzKustoDataConnection -ResourceGroupName $resourceGroupName -ClusterName $clusterName -DatabaseName $databaseName -DataConnectionName $deviceLogDataconnectionName -Location $clusterLocation -Kind "EventGrid" -EventHubResourceId $deviceLogEventHubResourceId -StorageAccountResourceId $storageAccountResourceId  -DataFormat "CSV" -ConsumerGroup '$Default' -TableName "DeviceLog" -MappingRuleName $deviceLogDataMappingName -BlobStorageEventType ["MicrosoftStorageBlobCreated"]
+            New-AzKustoDataConnection -ResourceGroupName $resourceGroupName -ClusterName $clusterName -DatabaseName $databaseName -DataConnectionName $deviceLogDataconnectionName -Location $clusterLocation -Kind "EventGrid" -EventHubResourceId $deviceLogEventHubResourceId -StorageAccountResourceId $storageAccountResourceId  -DataFormat "CSV" -ConsumerGroup '$Default' -TableName "DeviceLog" -MappingRuleName $deviceLogDataMappingName
             Write-Host "############## Created Data Connection."
         }
         else {
